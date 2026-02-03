@@ -5,9 +5,9 @@ package event;
  */
 public abstract class AbstractEvent implements Event {
     private final Object source;
-    private final String eventType;
+    private final EventType eventType;
     
-    public AbstractEvent(Object source, String eventType) {
+    public AbstractEvent(Object source, EventType eventType) {
         this.source = source;
         this.eventType = eventType;
     }
@@ -18,7 +18,7 @@ public abstract class AbstractEvent implements Event {
     }
     
     @Override
-    public String getEventType() {
+    public EventType getEventType() {
         return eventType;
     }
     

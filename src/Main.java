@@ -1,4 +1,6 @@
 import event.EventListener;
+import event.EventManager;
+import event.EventType;
 import event.HttpEventQueue;
 import event.impl.EventManagerImpl;
 import filters.Filter;
@@ -7,8 +9,8 @@ import filters.impl.FilterImpl;
 import filters.impl.FinalFilter;
 import filters.impl.RequestParse;
 import http.HttpRequestEvent;
-import observors.ThreadObserver;
-import observors.impl.ThreadObserverImpl;
+import observors.Observer;
+import observors.impl.HttpEventObserver;
 import server.Container;
 import server.RequestProcessTemplate;
 import server.Server;
@@ -24,51 +26,32 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("=== 基于事件驱动的类Tomcat容器启动 ===");
 
-
         Container container = new ContainerImpl();
         RequestProcessTemplate requestProcess = new RequestProcessImpl(container,new SocketConvertImpl());
-        ThreadObserver threadObserver = new ThreadObserverImpl(container,requestProcess);
-        HttpEventQueue.getInstance().addObserver(threadObserver);
-        // 创建服务器实例
-        Server server = new ServerImpl(container,requestProcess,threadObserver);
 
+
+         //注册事件处理
+        EventManager eventManager=EventManagerImpl.getInstance();
+        Observer httpEventObserver = new HttpEventObserver(container,requestProcess);
+        eventManager.registerListener(EventType.HTTPEVENT, httpEventObserver::handle);
+
+
+        // 创建服务器实例
+        Server server = new ServerImpl(container);
         Filter finalFilter=new FinalFilter();
         Filter requestParesFilter=new RequestParse(finalFilter);
         Filter firstFilter=new FilterImpl(requestParesFilter);
         FilterManager.getInstance().setFirstFilter(firstFilter);
         // 设置服务器端口
         server.setPort(8080);
-        
-        // 注册HTTP请求监听器
-        registerHttpEventListener();
-        
+
         // 启动服务器
         server.start();
         
         // 等待服务器运行
         waitForServer(server);
     }
-    /**
-     * 注册HTTP请求监听器
-     */
-    private static void registerHttpEventListener() {
-        //如果事件类型是HTTP类型，
-        EventManagerImpl.getInstance().registerListener("HTTP_REQUEST", new EventListener() {
-            @Override
-            public void onEvent(event.Event event) {
-                if (event instanceof HttpRequestEvent) {
-                    HttpRequestEvent httpEvent = (HttpRequestEvent) event;
-                    System.out.println("\n监听到HTTP请求事件：");
-                    System.out.println("- 事件类型: " + httpEvent.getEventType());
-                    System.out.println("- 请求方法: " + httpEvent.getRequest().getMethod());
-                    System.out.println("- 请求URL: " + httpEvent.getRequest().getUrl());
-                    System.out.println("- 客户端IP: " + httpEvent.getSource());
-                }
-            }
-        });
-        System.out.println("HTTP请求监听器已注册");
-    }
-    
+
     /**
      * 等待服务器运行
      */

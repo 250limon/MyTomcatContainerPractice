@@ -9,14 +9,14 @@ public interface EventManager {
      * @param eventType 事件类型
      * @param listener 事件监听器
      */
-    void registerListener(String eventType, EventListener listener);
+    void registerListener(EventType eventType, EventListener listener);
     
     /**
      * 移除事件监听器
      * @param eventType 事件类型
      * @param listener 事件监听器
      */
-    void removeListener(String eventType, EventListener listener);
+    void removeListener(EventType eventType, EventListener listener);
     
     /**
      * 触发事件

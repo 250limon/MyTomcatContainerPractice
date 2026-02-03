@@ -2,8 +2,7 @@ package server.impl;
 
 import event.HttpEvent;
 import event.HttpEventQueue;
-import observors.ThreadObserver;
-import observors.impl.ThreadObserverImpl;
+import observors.Observer;
 import server.Container;
 import server.RequestProcessTemplate;
 import server.Server;
@@ -21,15 +20,11 @@ public class ServerImpl implements Server {
     private String serverName = "MyTomcat";
     private ServerState state = ServerState.STOPPED;
     private ServerSocket serverSocket;
-    private RequestProcessTemplate requestProcess;
     private ExecutorService threadPool;
     private Container container;
-    private ThreadObserver threadObserver;
 
-    public ServerImpl(Container container,RequestProcessTemplate requestProcess,ThreadObserver threadObserver) {
+    public ServerImpl(Container container) {
         this.container = container;
-        this.requestProcess = requestProcess;
-        this.threadObserver = threadObserver;
     }
 
     @Override
@@ -73,7 +68,7 @@ public class ServerImpl implements Server {
                 final int threadId = i;
                 threadPool.submit(() -> {
                     System.out.println("事件处理器线程 " + threadId + " 启动");
-                    threadObserver.update();
+                    //threadObserver.handle();
                 });
             }
             

@@ -1,12 +1,13 @@
 package http;
 
 import event.Event;
+import event.EventType;
 
 /**
  * HTTP请求事件
  */
 public class HttpRequestEvent implements Event {
-    private static final String EVENT_TYPE = "HTTP_REQUEST";
+    private static final EventType EVENT_TYPE = EventType.HTTPEVENT;
     private final Object source;
     private final HttpRequest request;
     private final HttpResponse response;
@@ -23,7 +24,7 @@ public class HttpRequestEvent implements Event {
     }
     
     @Override
-    public String getEventType() {
+    public EventType getEventType() {
         return EVENT_TYPE;
     }
     

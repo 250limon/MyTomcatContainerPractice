@@ -9,10 +9,10 @@ import java.util.Map;
  * 抽象事件管理器类，提供EventManager接口的默认实现
  */
 public abstract class AbstractEventManager implements EventManager {
-    private final Map<String, List<EventListener>> listeners = new HashMap<>();
+    private final Map<EventType, List<EventListener>> listeners = new HashMap<>();
     
     @Override
-    public void registerListener(String eventType, EventListener listener) {
+    public void registerListener(EventType eventType, EventListener listener) {
         if (eventType == null || listener == null) {
             throw new IllegalArgumentException("Event type and listener cannot be null");
         }
@@ -78,7 +78,7 @@ public abstract class AbstractEventManager implements EventManager {
      * 获取所有事件类型
      * @return 事件类型列表
      */
-    protected List<String> getEventTypes() {
+    protected List<EventType> getEventTypes() {
         return new ArrayList<>(listeners.keySet());
     }
 }

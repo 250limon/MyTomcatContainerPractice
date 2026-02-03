@@ -14,5 +14,5 @@ public interface Event {
      * 获取事件类型
      * @return 事件类型
      */
-    String getEventType();
+    EventType getEventType();
 }
