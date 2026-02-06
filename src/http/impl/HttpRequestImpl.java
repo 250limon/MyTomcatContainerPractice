@@ -1,30 +1,24 @@
 package http.impl;
 
-import http.HttpRequest;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * HTTP请求的具体实现类
  */
-public class HttpRequestImpl implements HttpRequest {
+public class HttpRequestImpl implements http.HttpRequest {
     private String method;
     private String url;
     private String protocol;
     private Map<String, String> headers = new HashMap<>();
     private Map<String, String> parameters = new HashMap<>();
     private String body;
-    private InputStream inputStream;
+    private String requestData;
+    private Object source;
 
-    public HttpRequestImpl(Socket socket) throws IOException {
-        //parseRequest(socket.getInputStream());
-        inputStream = socket.getInputStream();
+    public HttpRequestImpl(String requestData, Object source)  {
+        this.requestData = requestData;
         // 重置请求信息
         this.method = null;
         this.url = null;
@@ -32,13 +26,15 @@ public class HttpRequestImpl implements HttpRequest {
         this.headers.clear();
         this.parameters.clear();
         this.body = null;
+        this.source = source;
+    }
+    public Object getSource() {
+        return source;
     }
 
-    public InputStream getInputStream() {
-        return inputStream;
+    public String getRequestData() {
+        return requestData;
     }
-
-
 
     @Override
     public String getMethod() {
@@ -122,6 +118,10 @@ public class HttpRequestImpl implements HttpRequest {
         }
         // HTTP/1.1默认是keep-alive
         return "HTTP/1.1".equals(protocol);
+    }
+
+    public void setRequestData(String requestData) {
+        this.requestData = requestData;
     }
 
     @Override

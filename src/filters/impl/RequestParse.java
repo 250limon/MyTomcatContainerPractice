@@ -3,12 +3,9 @@ package filters.impl;
 import filters.Filter;
 import http.HttpRequest;
 import http.HttpResponse;
-import java.net.SocketException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.SocketException;
 
 public class RequestParse extends Filter {
     public RequestParse(Filter finalFilter) {
@@ -34,77 +31,80 @@ public class RequestParse extends Filter {
 
         return filter.process(request);
     }
-
-
     /**
      * 解析HTTP请求
      */
-    private HttpRequest parseRequest(HttpRequest httpRequest) throws IOException {
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(httpRequest.getInputStream()));
-
-        // 解析请求行
-        String requestLine = reader.readLine();
-        if (requestLine == null) {
-            throw new IOException("Empty request");
-        }
-
-        String[] requestParts = requestLine.split(" ", 3);
-        if (requestParts.length < 3) {
-            throw new IOException("Invalid request line: " + requestLine);
-        }
-
-        httpRequest.setMethod(requestParts[0]);
-        httpRequest.setUrl(requestParts[1]);
-        httpRequest.setProtocol(requestParts[2]);
-
-        // 解析URL参数
-        parseUrlParameters(httpRequest);
-
-        // 解析请求头
-        String headerLine;
-        while ((headerLine = reader.readLine()) != null && !headerLine.isEmpty()) {
-            int colonIndex = headerLine.indexOf(':');
-            if (colonIndex != -1) {
-                String headerName = headerLine.substring(0, colonIndex).trim();
-                String headerValue = headerLine.substring(colonIndex + 1).trim();
-                httpRequest.setHeader(headerName, headerValue);
+    private void parseRequest(HttpRequest httpRequest) throws IOException {
+            String requestData = httpRequest.getRequestData();
+            if (requestData == null || requestData.isEmpty()) {
+                throw new IOException("Empty request");
             }
-        }
 
-        // 解析请求体（添加异常处理，处理客户端关闭连接的情况）
-        if (httpRequest.getHeader("Content-Length") != null) {
-            try {
-                int contentLength = Integer.parseInt(httpRequest.getHeader("Content-Length"));
-                char[] bodyChars = new char[contentLength];
-                int bytesRead = 0;
-                while (bytesRead < contentLength) {
-                    int read = reader.read(bodyChars, bytesRead, contentLength - bytesRead);
-                    if (read == -1) {
-                        // 客户端可能已关闭连接，记录日志并返回
-                        System.out.println("客户端关闭连接，请求体未完全读取");
-                        break;
-                    }
-                    bytesRead += read;
+            // 分割请求为行
+            String[] lines = requestData.split("\r\n");
+            if (lines.length == 0) {
+                throw new IOException("Invalid request format");
+            }
+
+            // 解析请求行
+            String requestLine = lines[0];
+            String[] requestParts = requestLine.split(" ", 3);
+            if (requestParts.length < 3) {
+                throw new IOException("Invalid request line: " + requestLine);
+            }
+
+            httpRequest.setMethod(requestParts[0]);
+            httpRequest.setUrl(requestParts[1]);
+            httpRequest.setProtocol(requestParts[2]);
+
+            // 解析URL参数
+            parseUrlParameters(httpRequest);
+
+            // 解析请求头
+            int bodyStartIndex = -1;
+            for (int i = 1; i < lines.length; i++) {
+                String line = lines[i];
+                if (line.isEmpty()) {
+                    // 空行表示请求头结束，请求体开始
+                    bodyStartIndex = i + 1;
+                    break;
                 }
-                if (bytesRead > 0) {
-                    httpRequest.setBody(new String(bodyChars, 0, bytesRead));
+
+                int colonIndex = line.indexOf(':');
+                if (colonIndex != -1) {
+                    String headerName = line.substring(0, colonIndex).trim();
+                    String headerValue = line.substring(colonIndex + 1).trim();
+                    httpRequest.setHeader(headerName, headerValue);
+                }
+            }
+
+            // 解析请求体
+            if (bodyStartIndex > 0 && bodyStartIndex < lines.length) {
+                // 构建请求体
+                StringBuilder bodyBuilder = new StringBuilder();
+                for (int i = bodyStartIndex; i < lines.length; i++) {
+                    bodyBuilder.append(lines[i]);
+                    if (i < lines.length - 1) {
+                        bodyBuilder.append("\r\n");
+                    }
+                }
+
+                String body = bodyBuilder.toString();
+                if (!body.isEmpty()) {
+                    httpRequest.setBody(body);
+
                     // 解析POST参数
                     if ("POST".equals(httpRequest.getMethod()) && httpRequest.getHeader("Content-Type") != null &&
                             httpRequest.getHeader("Content-Type").contains("application/x-www-form-urlencoded")) {
                         parsePostParameters(httpRequest);
                     }
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("无效的Content-Length格式");
-            } catch (SocketException e) {
-                System.out.println("客户端关闭连接，无法读取请求体");
             }
         }
 
 
-        return httpRequest;
-    }
+
+
     /**
      * 解析URL参数
      */

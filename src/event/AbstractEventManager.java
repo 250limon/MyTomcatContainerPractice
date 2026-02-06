@@ -21,7 +21,7 @@ public abstract class AbstractEventManager implements EventManager {
     }
     
     @Override
-    public void removeListener(String eventType, EventListener listener) {
+    public void removeListener(EventType eventType, EventListener listener) {
         if (eventType == null || listener == null) {
             return;
         }
@@ -40,7 +40,6 @@ public abstract class AbstractEventManager implements EventManager {
         if (event == null) {
             throw new IllegalArgumentException("Event cannot be null");
         }
-        
         List<EventListener> eventListeners = listeners.get(event.getEventType());
         if (eventListeners != null) {
             for (EventListener listener : new ArrayList<>(eventListeners)) {

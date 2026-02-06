@@ -1,14 +1,19 @@
 package event;
 
 import java.net.Socket;
+import java.nio.channels.SocketChannel;
 
 public class HttpEvent extends AbstractEvent {
-    private Socket clientSocket;
-    public HttpEvent(Socket clientSocket) {
-        super(clientSocket,EventType.HTTPEVENT);
-        this.clientSocket = clientSocket;
+    private String requestData;
+    //private SocketChannel clientChannel;
+
+    public HttpEvent(String requestData,Object source) {
+        super(source,EventType.HTTPEVENT);
+        this.requestData = requestData;
     }
-    public Socket getClientSocket() {
-        return clientSocket;
+
+    public String getRequestData() {
+        return requestData;
     }
+
 }

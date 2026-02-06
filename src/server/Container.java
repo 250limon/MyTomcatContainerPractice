@@ -26,14 +26,7 @@ public interface Container {
      * @param servletName Servlet名称
      */
     void mapServlet(String urlPattern, String servletName);
-    
-    /**
-     * 处理HTTP请求
-     * @param request HTTP请求
-     * @param response HTTP响应
-     */
-    void processRequest(HttpRequest request, HttpResponse response);
-    
+
     /**
      * 获取Servlet
      * @param servletName Servlet名称

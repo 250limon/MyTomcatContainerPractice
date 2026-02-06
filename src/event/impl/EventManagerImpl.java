@@ -1,6 +1,8 @@
 package event.impl;
 
 import event.AbstractEventManager;
+import event.EventListener;
+import event.EventType;
 
 /**
  * 事件管理器的具体实现类
@@ -18,5 +20,10 @@ public class EventManagerImpl extends AbstractEventManager {
      */
     public static synchronized EventManagerImpl getInstance() {
         return instance;
+    }
+
+    @Override
+    public void removeListener(EventType eventType, EventListener listener) {
+
     }
 }

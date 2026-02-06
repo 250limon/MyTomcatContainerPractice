@@ -2,20 +2,13 @@ package server.impl;
 
 import event.EventManager;
 import event.impl.EventManagerImpl;
-import http.HttpRequest;
-import http.HttpResponse;
-import http.HttpRequestEvent;
-import http.impl.HttpRequestImpl;
-import http.impl.HttpResponseImpl;
 import server.Container;
 import servlet.Servlet;
 import servlet.ServletConfig;
 import servlet.impl.ServletConfigImpl;
 import servlet.impl.ServletContextImpl;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,45 +81,6 @@ public class ContainerImpl implements Container {
     }
 
     @Override
-    public void processRequest(HttpRequest request, HttpResponse response) {
-        try {
-            // 查找匹配的Servlet
-            String url = request.getUrl();
-            String servletName = getServletNameByUrl(url);
-
-            if (servletName == null) {
-                // 404 处理
-                response.setStatusCode(404);
-                response.setBody("<html><body><h1>404 Not Found</h1><p>URL: " + url + "</p></body></html>");
-                response.finish();
-                return;
-            }
-
-            // 获取Servlet
-            Servlet servlet = getServlet(servletName);
-            if (servlet == null) {
-                // 500 处理
-                response.setStatusCode(500);
-                response.setBody("<html><body><h1>500 Internal Server Error</h1><p>Servlet不可用</p></body></html>");
-                response.finish();
-                return;
-            }
-
-            // 处理请求
-            System.out.println("处理请求: " + request.getMethod() + " " + url + " -> " + servletName);
-            servlet.service(request, response);
-        } catch (Exception e) {
-            System.err.println("处理请求异常: " + e.getMessage());
-            e.printStackTrace();
-            
-            // 500 处理
-            response.setStatusCode(500);
-            response.setBody("<html><body><h1>500 Internal Server Error</h1><p>" + e.getMessage() + "</p></body></html>");
-            response.finish();
-        }
-    }
-
-    @Override
     public Servlet getServlet(String servletName) {
         return servlets.get(servletName);
     }
@@ -179,50 +133,4 @@ public class ContainerImpl implements Container {
         System.out.println("容器销毁完成");
     }
 
-    /**
-     * 处理客户端连接
-     */
-    public void handleConnection(Socket socket) {
-        try {
-            System.out.println("接收到客户端连接: " + socket.getInetAddress() + ":" + socket.getPort());
-
-            boolean keepAlive = true;
-            while (keepAlive && !socket.isClosed()) {
-                try {
-                    // 设置超时，避免长时间阻塞
-                    socket.setSoTimeout(30000); // 30秒超时
-
-                    // 创建请求和响应对象
-                    HttpRequest request = new HttpRequestImpl(socket);
-                    HttpResponse response = new HttpResponseImpl(socket);
-
-                    // 触发HTTP请求事件
-                    HttpRequestEvent event = new HttpRequestEvent(this, request, response);
-                    eventManager.fireEvent(event);
-
-                    // 检查是否保持连接
-                    keepAlive = request.isKeepAlive();
-                    ((HttpResponseImpl) response).setKeepAlive(keepAlive);
-
-                    // 处理请求
-                    processRequest(request, response);
-                } catch (IOException e) {
-                    // 超时异常表示客户端在规定时间内没有发送新请求，关闭连接
-                    if (e.getMessage().contains("Read timed out")) {
-                        System.out.println("客户端连接超时: " + socket.getInetAddress() + ":" + socket.getPort());
-                    } else {
-                        System.err.println("处理请求异常: " + e.getMessage());
-                    }
-                    keepAlive = false;
-                }
-            }
-        } finally {
-            try {
-                socket.close();
-                System.out.println("客户端连接已关闭: " + socket.getInetAddress() + ":" + socket.getPort());
-            } catch (IOException e) {
-                System.err.println("关闭客户端连接异常: " + e.getMessage());
-            }
-        }
-    }
 }

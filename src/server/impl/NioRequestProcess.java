@@ -1,26 +1,25 @@
 package server.impl;
 
-import filters.FilterManager;
 import http.HttpRequest;
 import http.HttpResponse;
 import server.Container;
 import server.RequestProcessTemplate;
 
-public class RequestProcessImpl extends RequestProcessTemplate {
-    private Container container;
-    public RequestProcessImpl(Container container) {
-        super(container);
+/**
+ * 基于NIO的请求处理模板
+ */
+public class NioRequestProcess extends RequestProcessTemplate {
+     NioRequestProcess(Container container, Convert socketConvert) {
+        super(container, socketConvert);
     }
 
     @Override
     public HttpRequest filter(HttpRequest request) {
-        return FilterManager.getInstance().getFirstFilter().process(request);
+        return null;
     }
 
     @Override
     public HttpResponse createResponse(HttpRequest request) {
         return null;
     }
-
-
 }

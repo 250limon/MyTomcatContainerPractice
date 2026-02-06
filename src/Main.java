@@ -1,23 +1,18 @@
-import event.EventListener;
 import event.EventManager;
 import event.EventType;
-import event.HttpEventQueue;
 import event.impl.EventManagerImpl;
 import filters.Filter;
 import filters.FilterManager;
 import filters.impl.FilterImpl;
 import filters.impl.FinalFilter;
 import filters.impl.RequestParse;
-import http.HttpRequestEvent;
 import observors.Observer;
 import observors.impl.HttpEventObserver;
 import server.Container;
+import server.RequestDataString;
 import server.RequestProcessTemplate;
 import server.Server;
-import server.impl.ContainerImpl;
-import server.impl.RequestProcessImpl;
-import server.impl.ServerImpl;
-import server.impl.SocketConvertImpl;
+import server.impl.*;
 
 /**
  * 主类，启动基于事件驱动的类Tomcat容器
@@ -27,17 +22,16 @@ public class Main {
         System.out.println("=== 基于事件驱动的类Tomcat容器启动 ===");
 
         Container container = new ContainerImpl();
-        RequestProcessTemplate requestProcess = new RequestProcessImpl(container,new SocketConvertImpl());
-
+        RequestProcessTemplate requestProcess = new RequestProcessImpl(container);
 
          //注册事件处理
         EventManager eventManager=EventManagerImpl.getInstance();
-        Observer httpEventObserver = new HttpEventObserver(container,requestProcess);
+        Observer httpEventObserver = new HttpEventObserver(requestProcess);
         eventManager.registerListener(EventType.HTTPEVENT, httpEventObserver::handle);
 
-
         // 创建服务器实例
-        Server server = new ServerImpl(container);
+        RequestDataString requestDataString=new RequestDataFromBuffer();
+        Server server = new NioServerImpl(container,eventManager,requestDataString);
         Filter finalFilter=new FinalFilter();
         Filter requestParesFilter=new RequestParse(finalFilter);
         Filter firstFilter=new FilterImpl(requestParesFilter);

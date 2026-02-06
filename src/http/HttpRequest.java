@@ -57,10 +57,10 @@ public interface HttpRequest {
      * @return 请求体内容
      */
     String getBody();
+    String getRequestData();
     void setBody(String body);
 
-    InputStream getInputStream();
-    
+
     /**
      * 判断是否保持连接
      * @return true表示保持连接，false表示关闭连接
@@ -74,4 +74,5 @@ public interface HttpRequest {
     boolean hasHandled();
 
     void setProtocol(String requestPart);
+
 }

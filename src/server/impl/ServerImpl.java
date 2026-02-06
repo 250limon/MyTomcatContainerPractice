@@ -1,10 +1,10 @@
 package server.impl;
 
+import event.Event;
+import event.EventManager;
 import event.HttpEvent;
-import event.HttpEventQueue;
-import observors.Observer;
 import server.Container;
-import server.RequestProcessTemplate;
+import server.RequestDataString;
 import server.Server;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -22,9 +22,13 @@ public class ServerImpl implements Server {
     private ServerSocket serverSocket;
     private ExecutorService threadPool;
     private Container container;
+    private EventManager eventManager;
+    private RequestDataString requestDataString;
 
-    public ServerImpl(Container container) {
+    public ServerImpl(Container container, EventManager eventManager, RequestDataString requestDataString) {
         this.container = container;
+        this.eventManager = eventManager;
+        this.requestDataString = requestDataString;
     }
 
     @Override
@@ -63,22 +67,12 @@ public class ServerImpl implements Server {
      */
     private void acceptConnections() {
         new Thread(() -> {
-            // 提交3个事件处理器到线程池，每个线程处理事件队列
-            for (int i = 0; i < 2; i++) {
-                final int threadId = i;
-                threadPool.submit(() -> {
-                    System.out.println("事件处理器线程 " + threadId + " 启动");
-                    //threadObserver.handle();
-                });
-            }
-            
             while (state == ServerState.STARTED) {
                 try {
                     Socket clientSocket = serverSocket.accept();//每次有新的客户端连接都会返回一个新的实例
-                    // 创建HttpEvent对象
-                    HttpEvent event = new HttpEvent( clientSocket);
-                    // 将事件加入队列
-                    HttpEventQueue.getInstance().enqueue(event);
+                    // 创建Event对象
+                    Event event = new HttpEvent(requestDataString.getRequestData(clientSocket),clientSocket);
+                    eventManager.fireEvent(event);
                 } catch (IOException e) {
                     if (state == ServerState.STARTED) {
                         System.err.println("接受客户端连接失败: " + e.getMessage());
