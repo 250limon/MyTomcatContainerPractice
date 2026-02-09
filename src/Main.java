@@ -1,41 +1,33 @@
 import event.EventManager;
-import event.EventType;
 import event.impl.EventManagerImpl;
 import filters.Filter;
 import filters.FilterManager;
-import filters.impl.FilterImpl;
-import filters.impl.FinalFilter;
-import filters.impl.RequestParse;
 import observors.Observer;
-import observors.impl.HttpEventObserver;
-import server.Container;
-import server.RequestDataString;
-import server.RequestProcessTemplate;
 import server.Server;
-import server.impl.*;
-
+import spring.SpringContext;
+import event.EventType;
 /**
  * 主类，启动基于事件驱动的类Tomcat容器
  */
 public class Main {
     public static void main(String[] args) {
         System.out.println("=== 基于事件驱动的类Tomcat容器启动 ===");
+        System.out.println("=== 使用Spring-like IoC容器 ===");
 
-        Container container = new ContainerImpl();
-        RequestProcessTemplate requestProcess = new RequestProcessImpl(container);
-
-         //注册事件处理
-        EventManager eventManager=EventManagerImpl.getInstance();
-        Observer httpEventObserver = new HttpEventObserver(requestProcess);
-        eventManager.registerListener(EventType.HTTPEVENT, httpEventObserver::handle);
-
-        // 创建服务器实例
-        RequestDataString requestDataString=new RequestDataFromBuffer();
-        Server server = new NioServerImpl(container,eventManager,requestDataString);
-        Filter finalFilter=new FinalFilter();
-        Filter requestParesFilter=new RequestParse(finalFilter);
-        Filter firstFilter=new FilterImpl(requestParesFilter);
+        // 创建Spring上下文，加载配置文件
+        SpringContext springContext = new SpringContext("src/spring/applicationContext.xml");
+        
+        // 从Spring上下文获取服务器实例
+        Server server = springContext.getBean("server");
+        
+        // 设置过滤器链
+        Filter firstFilter = springContext.getBean("firstFilter");
         FilterManager.getInstance().setFirstFilter(firstFilter);
+        EventManager eventManager = EventManagerImpl.getInstance();
+        Observer observer=springContext.getBean("httpEventObserver");
+        eventManager.registerListener(EventType.HTTPEVENT, observer::handle);
+
+        
         // 设置服务器端口
         server.setPort(8080);
 
@@ -54,6 +46,10 @@ public class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("\n=== 服务器正在停止 ===");
             server.stop();
+            // 关闭事件管理器的线程池
+            EventManagerImpl eventManager = EventManagerImpl.getInstance();
+            eventManager.shutdown();
+            System.out.println("事件管理器线程池已关闭");
         }));
 
         // 保持主线程运行

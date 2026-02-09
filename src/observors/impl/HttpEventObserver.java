@@ -4,14 +4,11 @@ import event.Event;
 import event.HttpEvent;
 import http.impl.HttpRequestImpl;
 import observors.Observer;
-import server.Container;
-import server.RequestProcessTemplate;
-
-import java.nio.channels.SocketChannel;
+import server.RequestProcess;
 
 public class HttpEventObserver implements Observer {
-    private RequestProcessTemplate requestProcess;
-    public HttpEventObserver(RequestProcessTemplate requestProcess) {
+    private RequestProcess requestProcess;
+    public HttpEventObserver(RequestProcess requestProcess) {
         this.requestProcess = requestProcess;
     }
     @Override

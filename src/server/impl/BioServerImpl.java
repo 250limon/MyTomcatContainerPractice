@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 /**
  * 服务器的具体实现类，负责监听端口并处理客户端连接
  */
-public class ServerImpl implements Server {
+public class BioServerImpl implements Server {
     private int port = 8080;
     private String serverName = "MyTomcat";
     private ServerState state = ServerState.STOPPED;
@@ -25,7 +25,7 @@ public class ServerImpl implements Server {
     private EventManager eventManager;
     private RequestDataString requestDataString;
 
-    public ServerImpl(Container container, EventManager eventManager, RequestDataString requestDataString) {
+    public BioServerImpl(Container container, EventManager eventManager, RequestDataString requestDataString) {
         this.container = container;
         this.eventManager = eventManager;
         this.requestDataString = requestDataString;

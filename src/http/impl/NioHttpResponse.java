@@ -80,7 +80,6 @@ public class NioHttpResponse implements HttpResponse {
         if (finished) {
             return;
         }
-
         try {
             // 构建完整的HTTP响应
             String response = buildResponse();

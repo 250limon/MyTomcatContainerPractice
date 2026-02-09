@@ -3,13 +3,16 @@ package http.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.Map;
 
 public class BioHttpResponse extends AbstractHttpResponse {
     private OutputStream outputStream;
     private PrintWriter writer;
-    public BioHttpResponse(String responseData) throws IOException {
+    public BioHttpResponse(String responseData, Socket clientSocket) throws IOException {
         super(responseData);
+        this.outputStream = clientSocket.getOutputStream();
+        this.writer = new PrintWriter(outputStream, true);
     }
 
     @Override

@@ -4,10 +4,10 @@ import http.HttpRequest;
 import http.HttpResponse;
 import servlet.Servlet;
 
-public abstract class RequestProcessTemplate {
+public abstract class RequestProcess {
 
     private Container container;
-    protected RequestProcessTemplate(Container container) {
+    protected RequestProcess(Container container) {
         this.container = container;
     }
 
@@ -16,7 +16,6 @@ public abstract class RequestProcessTemplate {
 
 
     public void process(HttpRequest request){
-       // HttpRequest request = convertToRequest(requestData);
         HttpResponse response = createResponse(request);
         HttpRequest handled_request = filter(request);
         String url = handled_request.getUrl();
@@ -46,22 +45,20 @@ public abstract class RequestProcessTemplate {
 
     }
 
-    private boolean exceptionHandle(String servletName, Servlet servlet, HttpResponse response,String url)
+    private void exceptionHandle(String servletName, Servlet servlet, HttpResponse response,String url)
     {
         if (servletName == null) {
             // 404 处理
             response.setStatusCode(404);
             response.setBody("<html><body><h1>404 Not Found</h1><p>URL: " + url + "</p></body></html>");
-
-            return true;
+            response.finish();
         }
         if (servlet == null) {
             // 500 处理
             response.setStatusCode(500);
             response.setBody("<html><body><h1>500 Internal Server Error</h1><p>Servlet不可用</p></body></html>");
-            return true;
+            response.finish();
         }
-        return false;
     }
 
 }

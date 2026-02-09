@@ -74,5 +74,6 @@ public interface HttpRequest {
     boolean hasHandled();
 
     void setProtocol(String requestPart);
+    Object getSource();
 
 }

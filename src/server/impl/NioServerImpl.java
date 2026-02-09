@@ -34,19 +34,8 @@ public class NioServerImpl implements Server {
         this.container = container;
         this.eventManager = eventManager;
         this.requestDataString = requestDataString;
-        // 注册NIO事件观察者
-        registerNioObserver();
     }
-    
-    /**
-     * 注册NIO事件观察者
-     */
-    private void registerNioObserver() {
-        // 创建NIO事件观察者
-        observors.impl.NioHttpEventObserver nioObserver = new observors.impl.NioHttpEventObserver(container);
-        // 注册到事件管理器
-        //eventManager.registerObserver(nioObserver);
-    }
+
 
     @Override
     public void start() {
@@ -178,6 +167,7 @@ public class NioServerImpl implements Server {
         if (requestData.contains("\r\n\r\n")) {
             // 创建HttpEvent并加入队列，同时传递客户端通道信息
             HttpEvent event = new HttpEvent(requestData, clientChannel);
+            System.out.println("收到请求: " + requestData);
             eventManager.fireEvent(event);
 
             // 重置Buffer并重新注册读事件

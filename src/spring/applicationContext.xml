@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+    <!-- 容器配置 -->
+    <bean id="container" class="server.impl.ContainerImpl" />
+    
+    <!-- 请求处理器配置 -->
+    <bean id="requestProcess" class="server.impl.NioRequestProcess">
+        <constructor-arg ref="container" />
+    </bean>
+    
+    <!-- 事件管理配置 -->
+    <bean id="eventManager" class="event.impl.EventManagerImpl" factory-method="getInstance" />
+    <bean id="httpEventObserver" class="observors.impl.HttpEventObserver">
+        <constructor-arg ref="requestProcess" />
+    </bean>
+    <!-- 服务器配置 -->
+    <bean id="requestDataString" class="server.impl.RequestDataFromBuffer" />
+    <bean id="server" class="server.impl.NioServerImpl">
+        <constructor-arg ref="container" />
+        <constructor-arg ref="eventManager" />
+        <constructor-arg ref="requestDataString" />
+    </bean>
+    <!-- 过滤器配置 -->
+    <bean id="finalFilter" class="filters.impl.FinalFilter" />
+    <bean id="requestParseFilter" class="filters.impl.RequestParse">
+        <constructor-arg ref="finalFilter" />
+    </bean>
+    <bean id="firstFilter" class="filters.impl.FilterImpl">
+        <constructor-arg ref="requestParseFilter" />
+    </bean>
+    <bean id="httpEventObserver" class="observors.impl.HttpEventObserver" >
+        <constructor-arg ref="requestProcess" />
+    </bean>
+    
+</beans>

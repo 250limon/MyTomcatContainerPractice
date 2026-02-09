@@ -13,7 +13,17 @@ public class RequestDataFromSocket implements RequestDataString {
         Socket socket = (Socket) dataSource;
        try{
            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-           return bufferedReader.lines().collect(Collectors.joining("\n"));
+           StringBuilder requestData = new StringBuilder();
+           String line;
+           // 读取请求头，直到遇到空行（HTTP请求头结束标志）
+           while((line=bufferedReader.readLine())!=null){
+               requestData.append(line).append("\r\n");
+               // 检查是否遇到空行（请求头结束标志）
+               if(line.trim().isEmpty()){
+                   break;
+               }
+           }
+           return requestData.toString();
        }catch(Exception e){
            e.printStackTrace();
        }

@@ -24,6 +24,6 @@ public class EventManagerImpl extends AbstractEventManager {
 
     @Override
     public void removeListener(EventType eventType, EventListener listener) {
-
+        super.removeListener(eventType, listener);
     }
 }
