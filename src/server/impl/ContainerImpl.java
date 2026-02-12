@@ -35,9 +35,16 @@ public class ContainerImpl implements Container {
         try {
             registerServlet("helloWorld", "servlet.impl.HelloWorldServlet", new HashMap<>());
             mapServlet("/hello", "helloWorld");
-            mapServlet("/", "helloWorld");
         } catch (Exception e) {
             System.err.println("注册默认Servlet失败: " + e.getMessage());
+        }
+        
+        // 注册DispatcherServlet（Spring MVC）
+        try {
+            registerServlet("dispatcherServlet", "spring.mvc.DispatcherServlet", new HashMap<>());
+            mapServlet("/*", "dispatcherServlet");
+        } catch (Exception e) {
+            System.err.println("注册DispatcherServlet失败: " + e.getMessage());
         }
 
         initialized = true;

@@ -1,5 +1,7 @@
 package spring.beans.impl;
 
+import spring.annotation.Autowired;
+import spring.annotation.Qualifier;
 import spring.beans.BeanDefinition;
 import spring.beans.BeanFactory;
 
@@ -200,50 +202,121 @@ public class BeanFactoryImpl implements BeanFactory {
      * @param propertyValues 属性值映射
      */
     private void injectProperties(Object bean, Map<String, BeanDefinition.PropertyValue> propertyValues) 
-            throws IllegalAccessException {
-        
-        if (propertyValues == null || propertyValues.isEmpty()) {
-            return;
-        }
+            throws IllegalAccessException, InvocationTargetException, InstantiationException {
         
         Class<?> beanClass = bean.getClass();
         
-        for (Map.Entry<String, BeanDefinition.PropertyValue> entry : propertyValues.entrySet()) {
-            String propertyName = entry.getKey();
-            BeanDefinition.PropertyValue propertyValue = entry.getValue();
-            
-            try {
-                // 获取字段
-                Field field = beanClass.getDeclaredField(propertyName);
-                field.setAccessible(true);
+        // 处理所有属性注入（来自PackageScanner和XmlBeanDefinitionReader）
+        if (propertyValues != null && !propertyValues.isEmpty()) {
+            for (Map.Entry<String, BeanDefinition.PropertyValue> entry : propertyValues.entrySet()) {
+                String propertyName = entry.getKey();
+                BeanDefinition.PropertyValue propertyValue = entry.getValue();
                 
-                // 注入属性值
-                if (propertyValue.isRef()) {
-                    // 处理引用类型属性
-                    Object refBean = getBean(propertyValue.getRef());
-                    field.set(bean, refBean);
-                } else {
-                    // 处理值类型属性
-                    field.set(bean, propertyValue.getValue());
-                }
-                
-            } catch (NoSuchFieldException e) {
-                // 尝试通过setter方法注入
                 try {
-                    String setterName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+                    // 获取字段
+                    Field field = beanClass.getDeclaredField(propertyName);
+                    field.setAccessible(true);
                     
+                    // 注入属性值
                     if (propertyValue.isRef()) {
+                        // 处理引用类型属性
                         Object refBean = getBean(propertyValue.getRef());
-                        beanClass.getMethod(setterName, refBean.getClass()).invoke(bean, refBean);
+                        field.set(bean, refBean);
+                        System.out.println("Autowired field: " + propertyName + " -> " + refBean.getClass().getName());
                     } else {
-                        beanClass.getMethod(setterName, propertyValue.getValue().getClass()).invoke(bean, propertyValue.getValue());
+                        // 处理值类型属性
+                        field.set(bean, propertyValue.getValue());
                     }
                     
-                } catch (Exception ex) {
-                    // 如果既没有字段也没有setter方法，忽略该属性
-                    System.err.println("Warning: Cannot inject property '" + propertyName + "' into bean '" + bean.getClass().getName() + "'");
+                } catch (NoSuchFieldException e) {
+                    // 尝试通过setter方法注入
+                    try {
+                        String setterName = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+                        
+                        if (propertyValue.isRef()) {
+                            Object refBean = getBean(propertyValue.getRef());
+                            beanClass.getMethod(setterName, refBean.getClass()).invoke(bean, refBean);
+                            System.out.println("Autowired field: " + propertyName + " -> " + refBean.getClass().getName());
+                        } else {
+                            beanClass.getMethod(setterName, propertyValue.getValue().getClass()).invoke(bean, propertyValue.getValue());
+                        }
+                        
+                    } catch (Exception ex) {
+                        // 如果既没有字段也没有setter方法，忽略该属性
+                        System.err.println("Warning: Cannot inject property '" + propertyName + "' into bean '" + bean.getClass().getName() + "'");
+                    }
                 }
             }
         }
+    }
+    
+    /**
+     * 处理基于注解的字段注入
+     * @param bean Bean实例
+     * @param beanClass Bean类
+     */
+    private void injectAnnotatedFields(Object bean, Class<?> beanClass) throws IllegalAccessException {
+        // 获取所有字段，包括父类的字段
+        while (beanClass != null && beanClass != Object.class) {
+            Field[] fields = beanClass.getDeclaredFields();
+            for (Field field : fields) {
+                // 检查字段是否带有@Autowired注解
+                Autowired autowiredAnnotation = field.getAnnotation(Autowired.class);
+                if (autowiredAnnotation != null) {
+                    field.setAccessible(true);
+                    
+                    // 获取要注入的Bean实例
+                    Object beanToInject = getBeanForField(field);
+                    
+                    if (beanToInject != null) {
+                        // 注入Bean实例
+                        field.set(bean, beanToInject);
+                        System.out.println("Autowired field: " + field.getName() + " -> " + beanToInject.getClass().getName());
+                    } else if (autowiredAnnotation.required()) {
+                        // 如果是必须注入的，但没有找到对应的Bean，抛出异常
+                        throw new RuntimeException("Cannot find bean for field: " + field.getName());
+                    }
+                }
+            }
+            
+            // 处理父类的字段
+            beanClass = beanClass.getSuperclass();
+        }
+    }
+    
+    /**
+     * 获取要注入到字段中的Bean实例
+     * @param field 字段
+     * @return Bean实例
+     */
+    @SuppressWarnings("unchecked")
+    private Object getBeanForField(Field field) {
+        // 检查字段是否带有@Qualifier注解
+        Qualifier qualifierAnnotation = field.getAnnotation(Qualifier.class);
+        if (qualifierAnnotation != null) {
+            // 如果带有@Qualifier注解，使用指定的Bean ID
+            String beanId = qualifierAnnotation.value();
+            return getBean(beanId);
+        } else {
+            // 如果没有@Qualifier注解，根据类型查找Bean
+            Class<?> fieldType = field.getType();
+            Map<String, ?> beansOfType = getBeansOfType(fieldType);
+            
+            if (beansOfType.size() == 1) {
+                // 如果只有一个匹配的Bean，直接返回
+                return beansOfType.values().iterator().next();
+            } else if (beansOfType.size() > 1) {
+                // 如果有多个匹配的Bean，尝试根据字段名查找
+                String fieldName = field.getName();
+                if (beansOfType.containsKey(fieldName)) {
+                    return beansOfType.get(fieldName);
+                } else {
+                    // 如果没有找到匹配的Bean，抛出异常
+                    throw new RuntimeException("Multiple beans found for field: " + fieldName + ", please use @Qualifier to specify which one to inject");
+                }
+            }
+        }
+        
+        return null;
     }
 }
