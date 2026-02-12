@@ -45,7 +45,6 @@ public class SpringContext {
         
         // 扫描包，获取Bean定义
         Map<String, BeanDefinition> beanDefinitions = packageScanner.scan(basePackages);
-        
         // 创建Bean工厂并初始化
         beanFactory = new BeanFactoryImpl(beanDefinitions);
     }

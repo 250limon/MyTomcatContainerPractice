@@ -94,6 +94,7 @@ public class ContainerImpl implements Container {
 
     @Override
     public String getServletNameByUrl(String url) {
+
         // 精确匹配
         if (urlMappings.containsKey(url)) {
             return urlMappings.get(url);
@@ -107,6 +108,9 @@ public class ContainerImpl implements Container {
                 if (url.startsWith(prefix)) {
                     return entry.getValue();
                 }
+            }
+            else if (pattern.equals("/*")) {
+                return entry.getValue();
             }
         }
 

@@ -28,7 +28,6 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void init() {
         super.init();
-        
         // 创建Spring上下文，扫描控制器和服务类
         String[] basePackages = {"spring.test.controller", "spring.test.service"};
         SpringContext springContext = new SpringContext(basePackages);
@@ -43,7 +42,6 @@ public class DispatcherServlet extends HttpServlet {
      */
     public void init(SpringContext springContext) {
         this.springContext = springContext;
-        
         // 初始化视图解析器
         viewResolver.setPrefix("src/webapp/WEB-INF/views/");
         viewResolver.setSuffix(".html");
@@ -60,7 +58,6 @@ public class DispatcherServlet extends HttpServlet {
     private void registerControllers() {
         // 获取所有Bean名称
         String[] beanNames = springContext.getBeanDefinitionNames();
-        
         for (String beanName : beanNames) {
             // 获取Bean实例
             Object beanInstance = springContext.getBean(beanName);

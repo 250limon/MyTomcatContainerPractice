@@ -29,6 +29,7 @@ public class HandlerMapping {
      * @param controllerClass 控制器类
      */
     public void registerHandlerMethod(String beanName, Object beanInstance, Class<?> controllerClass) {
+
         // 检查类是否带有RequestMapping注解
         RequestMapping classMapping = controllerClass.getAnnotation(RequestMapping.class);
         String classUrl = "";
@@ -68,6 +69,7 @@ public class HandlerMapping {
                 
                 // 添加到映射中
                 handlerMethods.put(fullUrl, handlerMethod);
+                System.out.println("Registering handler method: " + fullUrl + " -> " + controllerClass.getName() + "." + method.getName());
                 
                 // 编译URL为正则表达式（用于处理路径变量）
                 String regexUrl = convertToRegex(fullUrl);

@@ -2,6 +2,7 @@ package spring.core.scan;
 
 import spring.annotation.Component;
 import spring.beans.BeanDefinition;
+import spring.mvc.annotation.Controller;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,13 +106,14 @@ public class PackageScanner {
             
             // 检查类是否带有@Component注解
             Component componentAnnotation = clazz.getAnnotation(Component.class);
-            if (componentAnnotation != null) {
+            Controller controllerAnnotation = clazz.getAnnotation(Controller.class);
+            if (componentAnnotation != null || controllerAnnotation != null) {
                 // 创建Bean定义
                 BeanDefinition beanDefinition = new BeanDefinition();
                 beanDefinition.setBeanClassName(className);
                 
                 // 获取Bean ID
-                String beanId = componentAnnotation.value();
+                String beanId = componentAnnotation != null ? componentAnnotation.value() : controllerAnnotation.value();
                 if (beanId.isEmpty()) {
                     // 如果没有指定Bean ID，使用类名的首字母小写作为Bean ID
                     beanId = toCamelCase(clazz.getSimpleName());

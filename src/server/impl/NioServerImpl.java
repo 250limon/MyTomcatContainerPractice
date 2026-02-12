@@ -167,7 +167,6 @@ public class NioServerImpl implements Server {
         if (requestData.contains("\r\n\r\n")) {
             // 创建HttpEvent并加入队列，同时传递客户端通道信息
             HttpEvent event = new HttpEvent(requestData, clientChannel);
-            System.out.println("收到请求: " + requestData);
             eventManager.fireEvent(event);
 
             // 重置Buffer并重新注册读事件
